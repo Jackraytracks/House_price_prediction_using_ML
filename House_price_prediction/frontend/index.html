@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>House Price Predictor</title>
+  <style>
+    /* Reset some defaults */
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f0f4f8;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container {
+      background: #ffffff;
+      padding: 30px 40px;
+      border-radius: 12px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 420px;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 25px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      color: #555;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    input[type="number"] {
+      width: 100%;
+      padding: 12px 15px;
+      margin-bottom: 20px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border-color 0.3s ease;
+    }
+    input[type="number"]:focus {
+      outline: none;
+      border-color: #007bff;
+      box-shadow: 0 0 6px rgba(0, 123, 255, 0.3);
+    }
+    button {
+      width: 100%;
+      padding: 14px 0;
+      background-color: #007bff;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      user-select: none;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    button:active {
+      background-color: #004494;
+    }
+    #output {
+      margin-top: 25px;
+      text-align: center;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #333;
+      min-height: 1.5em;
+      user-select: text;
+      word-wrap: break-word;
+    }
+    .error {
+      color: #d9534f;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>House Price Predictor</h1>
+
+    <label for="area">Area (sq.ft)</label>
+    <input type="number" id="area" placeholder="Enter area in square feet" min="0" />
+
+    <label for="bedrooms">Number of Bedrooms</label>
+    <input type="number" id="bedrooms" placeholder="Enter number of bedrooms" min="0" />
+
+    <label for="bathrooms">Number of Bathrooms</label>
+    <input type="number" id="bathrooms" placeholder="Enter number of bathrooms" min="0" />
+
+    <button onclick="predictPrice()">Predict Price</button>
+
+    <p id="output"></p>
+  </div>
+
+  <script>
+    async function predictPrice() {
+      const output = document.getElementById('output');
+      output.classList.remove('error');
+      output.innerText = 'Predicting...';
+
+      const area = parseFloat(document.getElementById('area').value);
+      const bedrooms = parseInt(document.getElementById('bedrooms').value);
+      const bathrooms = parseInt(document.getElementById('bathrooms').value);
+
+      // Validate inputs
+      if (
+        isNaN(area) || area <= 0 ||
+        isNaN(bedrooms) || bedrooms < 0 ||
+        isNaN(bathrooms) || bathrooms < 0
+      ) {
+        output.classList.add('error');
+        output.innerText = 'Please enter valid positive numbers for all fields.';
+        return;
+      }
+
+      try {
+        const response = await fetch('http://127.0.0.1:5000/predict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ area, bedrooms, bathrooms })
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.error) {
+          output.classList.add('error');
+          output.innerText = `Error: ${data.error}`;
+          return;
+        }
+
+        output.classList.remove('error');
+        output.innerText = `Predicted Price: ₹${data.predicted_price} Lakhs`;
+      } catch (error) {
+        output.classList.add('error');
+        output.innerText = `Error: ${error.message}`;
+      }
+    }
+  </script>
+</body>
+</html>
